@@ -1,5 +1,6 @@
 package net.etfbl.cryptocoin.merkletree;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -11,7 +12,7 @@ import org.bouncycastle.util.encoders.Hex;
 
 public class MerkleNode {
 	
-	private String hash;
+	private byte[] hash;
 	private MerkleNode leftChild;
 	private MerkleNode rightChild;
 	
@@ -26,8 +27,12 @@ public class MerkleNode {
 		this.computeSignature();
 	}
 
-	public MerkleNode(String hash) {
+	public MerkleNode(byte[] hash) {
 		this.hash = hash;
+	}
+
+	public MerkleNode(String input) {
+		this.hash = computeHash(input);
 	}
 
 	public boolean isLeaf() {
@@ -40,56 +45,56 @@ public class MerkleNode {
 		if (rightChild == null)
 			hash = leftChild.hash;
 		else
-			hash = computeHash(leftChild.hash + rightChild.hash);
+			hash = computeHash(concatenateByteArrays(leftChild.hash, rightChild.hash));
 	}
 
-	public static String computeHash(String input) {
+	private static byte[] computeHash(String input) {
+		return computeHash(input.getBytes(StandardCharsets.UTF_8));
+	}
+
+	public static byte[] computeHash(byte[] input) {
 		MessageDigest messageDigest = null;
 		try {
 			messageDigest = MessageDigest.getInstance("SHA-1");
-			byte[] hash = messageDigest.digest(input.getBytes(StandardCharsets.UTF_8));
+			byte[] hash = messageDigest.digest(input);
 
-			String hexHash = new String(Hex.encode(hash));
-			System.out.println(hexHash + " " + "[" + input + "]");
-			return hexHash;
+			return hash;
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
 
-	public String getHash() {
-		return hash;
+	private byte[] concatenateByteArrays(byte[] firstArray, byte[] secondArray) {
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		try {
+			outputStream.write(firstArray);
+			outputStream.write(secondArray);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return outputStream.toByteArray( );
 	}
 
-	public void setHash(String hash) {
-		this.hash = hash;
+	public byte[] getHash() {
+		return hash;
 	}
 
 	public MerkleNode getLeftChild() {
 		return leftChild;
 	}
 
-	public void setLeftChild(MerkleNode leftChild) {
-		this.leftChild = leftChild;
-	}
-
 	public MerkleNode getRightChild() {
 		return rightChild;
 	}
 
-	public void setRightChild(MerkleNode rightChild) {
-		this.rightChild = rightChild;
-	}
-
 	public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
-		MerkleNode leaf1 = new MerkleNode(computeHash("111111"));
+		MerkleNode leaf1 = new MerkleNode(computeHash("11111111111111111111"));
 		MerkleNode leaf2 = new MerkleNode(computeHash("2"));
 		MerkleNode leaf3 = new MerkleNode(computeHash("3"));
 		MerkleNode leaf4 = new MerkleNode(computeHash("4"));
 		MerkleNode leaf5 = new MerkleNode(computeHash("5"));
-//		MerkleNode leaf6 = new MerkleNode(computeHash("6"));
-//		MerkleNode leaf7 = new MerkleNode(computeHash("7"));
 
 		List<MerkleNode> leaves = new ArrayList<>();
 		leaves.add(leaf1);
@@ -97,26 +102,8 @@ public class MerkleNode {
 		leaves.add(leaf3);
 		leaves.add(leaf4);
 		leaves.add(leaf5);
-//		leaves.add(leaf6);
-//		leaves.add(leaf7);
-//		leaves.add(leaf8);
 
 		MerkleTree tree = new MerkleTree(leaves);
-		System.out.println(tree.build().hash);
-		
-		byte[] leaf1Bytes = new MerkleNode("3d4f2bf07dc1be38b20cd6e46949a1071f9d0e3d").hash.getBytes(StandardCharsets.UTF_8);
-		byte[] leaf2Bytes = new MerkleNode("da4b9237bacccdf19c0760cab7aec4a8359010b0").hash.getBytes(StandardCharsets.UTF_8);
-		
-		byte[] leaf12Bytes = new byte[leaf1Bytes.length + leaf2Bytes.length];
-	    System.arraycopy(leaf1Bytes, 0, leaf12Bytes, 0, leaf1Bytes.length);
-	    System.arraycopy(leaf2Bytes, 0, leaf12Bytes, leaf1Bytes.length, leaf2Bytes.length);
-
-		MessageDigest messageDigest = null;
-		messageDigest = MessageDigest.getInstance("SHA-1");
-		byte[] hash = messageDigest.digest(leaf12Bytes);
-
-		String hexHash = new String(Hex.encode(hash));
-		System.out.println("*******");
-		System.out.println(hexHash);
+		System.out.println("root: " + Hex.toHexString(tree.build().hash));
 	}
 }

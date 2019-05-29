@@ -26,13 +26,13 @@ public class MerkleTree {
     	if (nodes.size() == 1)
     		this.root = nodes.get(0);
         else {
-        	List<MerkleNode> parents = new ArrayList<>();
+        	List<MerkleNode> parentNodes = new ArrayList<>();
         	for (int i = 0; i < nodes.size(); i += 2) {
-        		MerkleNode right = (i + 1 < nodes.size()) ? nodes.get(i + 1) : null;
-        		MerkleNode parent = new MerkleNode(nodes.get(i), right);
-        		parents.add(parent);
+        		MerkleNode rightNode = (i + 1 < nodes.size()) ? nodes.get(i + 1) : null;
+        		MerkleNode parentNode = new MerkleNode(nodes.get(i), rightNode);
+        		parentNodes.add(parentNode);
         	}
-        	build(parents);
+        	build(parentNodes);
         }
     }
 
