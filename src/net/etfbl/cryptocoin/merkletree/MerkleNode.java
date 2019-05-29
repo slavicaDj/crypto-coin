@@ -1,14 +1,13 @@
 package net.etfbl.cryptocoin.merkletree;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.bouncycastle.util.encoders.Hex;
+
+import net.etfbl.cryptocoin.util.Util;
 
 public class MerkleNode {
 	
@@ -24,7 +23,7 @@ public class MerkleNode {
 		this.leftChild = leftChild;
 		this.rightChild = rightChild;
 		
-		this.computeSignature();
+		this.computeHash();
 	}
 
 	public MerkleNode(byte[] hash) {
@@ -32,7 +31,7 @@ public class MerkleNode {
 	}
 
 	public MerkleNode(String input) {
-		this.hash = computeHash(input);
+		this.hash = Util.computeHash(input);
 	}
 
 	public boolean isLeaf() {
@@ -41,40 +40,11 @@ public class MerkleNode {
 		return false;
 	}
 
-	public void computeSignature() {
+	public void computeHash() {
 		if (rightChild == null)
 			hash = leftChild.hash;
 		else
-			hash = computeHash(concatenateByteArrays(leftChild.hash, rightChild.hash));
-	}
-
-	private static byte[] computeHash(String input) {
-		return computeHash(input.getBytes(StandardCharsets.UTF_8));
-	}
-
-	public static byte[] computeHash(byte[] input) {
-		MessageDigest messageDigest = null;
-		try {
-			messageDigest = MessageDigest.getInstance("SHA-1");
-			byte[] hash = messageDigest.digest(input);
-
-			return hash;
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
-	private byte[] concatenateByteArrays(byte[] firstArray, byte[] secondArray) {
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		try {
-			outputStream.write(firstArray);
-			outputStream.write(secondArray);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return outputStream.toByteArray( );
+			hash = Util.computeHash(Util.concatenateByteArrays(leftChild.hash, rightChild.hash));
 	}
 
 	public byte[] getHash() {
@@ -90,11 +60,11 @@ public class MerkleNode {
 	}
 
 	public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
-		MerkleNode leaf1 = new MerkleNode(computeHash("11111111111111111111"));
-		MerkleNode leaf2 = new MerkleNode(computeHash("2"));
-		MerkleNode leaf3 = new MerkleNode(computeHash("3"));
-		MerkleNode leaf4 = new MerkleNode(computeHash("4"));
-		MerkleNode leaf5 = new MerkleNode(computeHash("5"));
+		MerkleNode leaf1 = new MerkleNode(Util.computeHash("a"));
+		MerkleNode leaf2 = new MerkleNode(Util.computeHash("b"));
+		MerkleNode leaf3 = new MerkleNode(Util.computeHash("c"));
+		MerkleNode leaf4 = new MerkleNode(Util.computeHash("d"));
+		MerkleNode leaf5 = new MerkleNode(Util.computeHash("e"));
 
 		List<MerkleNode> leaves = new ArrayList<>();
 		leaves.add(leaf1);

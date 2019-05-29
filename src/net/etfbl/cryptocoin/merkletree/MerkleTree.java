@@ -7,6 +7,7 @@ public class MerkleTree {
 
 	private MerkleNode root;
 	private List<MerkleNode> nodes;
+	/* delete leaves? */
 	private List<MerkleNode> leaves;
 
 	public MerkleTree() {
