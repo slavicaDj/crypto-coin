@@ -1,6 +1,5 @@
 package net.etfbl.cryptocoin.merkletree;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -84,13 +83,13 @@ public class MerkleNode {
 	}
 
 	public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
-		MerkleNode leaf1 = new MerkleNode(computeHash("France"));
-		MerkleNode leaf2 = new MerkleNode(computeHash("Germany"));
-		MerkleNode leaf3 = new MerkleNode(computeHash("Denmark"));
-		MerkleNode leaf4 = new MerkleNode(computeHash("Sweden"));
-		MerkleNode leaf5 = new MerkleNode(computeHash("UK"));
-		MerkleNode leaf6 = new MerkleNode(computeHash("Spain"));
-		MerkleNode leaf7 = new MerkleNode(computeHash("Italy"));
+		MerkleNode leaf1 = new MerkleNode(computeHash("111111"));
+		MerkleNode leaf2 = new MerkleNode(computeHash("2"));
+		MerkleNode leaf3 = new MerkleNode(computeHash("3"));
+		MerkleNode leaf4 = new MerkleNode(computeHash("4"));
+		MerkleNode leaf5 = new MerkleNode(computeHash("5"));
+//		MerkleNode leaf6 = new MerkleNode(computeHash("6"));
+//		MerkleNode leaf7 = new MerkleNode(computeHash("7"));
 
 		List<MerkleNode> leaves = new ArrayList<>();
 		leaves.add(leaf1);
@@ -98,15 +97,15 @@ public class MerkleNode {
 		leaves.add(leaf3);
 		leaves.add(leaf4);
 		leaves.add(leaf5);
-		leaves.add(leaf6);
-		leaves.add(leaf7);
+//		leaves.add(leaf6);
+//		leaves.add(leaf7);
 //		leaves.add(leaf8);
 
 		MerkleTree tree = new MerkleTree(leaves);
 		System.out.println(tree.build().hash);
 		
-		byte[] leaf1Bytes = leaf1.hash.getBytes(StandardCharsets.UTF_8);
-		byte[] leaf2Bytes = leaf2.hash.getBytes(StandardCharsets.UTF_8);
+		byte[] leaf1Bytes = new MerkleNode("3d4f2bf07dc1be38b20cd6e46949a1071f9d0e3d").hash.getBytes(StandardCharsets.UTF_8);
+		byte[] leaf2Bytes = new MerkleNode("da4b9237bacccdf19c0760cab7aec4a8359010b0").hash.getBytes(StandardCharsets.UTF_8);
 		
 		byte[] leaf12Bytes = new byte[leaf1Bytes.length + leaf2Bytes.length];
 	    System.arraycopy(leaf1Bytes, 0, leaf12Bytes, 0, leaf1Bytes.length);

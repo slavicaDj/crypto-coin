@@ -40,24 +40,12 @@ public class MerkleTree {
 		return root;
 	}
 
-	public void setRoot(MerkleNode root) {
-		this.root = root;
-	}
-
 	public List<MerkleNode> getNodes() {
 		return nodes;
 	}
 
-	public void setNodes(ArrayList<MerkleNode> nodes) {
-		this.nodes = nodes;
-	}
-
 	public List<MerkleNode> getLeaves() {
 		return leaves;
-	}
-
-	public void setLeaves(ArrayList<MerkleNode> leaves) {
-		this.leaves = leaves;
 	}
 
 }
