@@ -3,10 +3,12 @@ package net.etfbl.cryptocoin.merkletree;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.bouncycastle.util.encoders.Hex;
 
+import net.etfbl.cryptocoin.util.Crypto;
 import net.etfbl.cryptocoin.util.Util;
 
 public class MerkleNode {
@@ -27,11 +29,11 @@ public class MerkleNode {
 	}
 
 	public MerkleNode(byte[] hash) {
-		this.hash = hash;
+		this.hash = Arrays.copyOf(hash, hash.length);
 	}
 
 	public MerkleNode(String input) {
-		this.hash = Util.computeHash(input);
+		this.hash = Crypto.computeHash(input);
 	}
 
 	public boolean isLeaf() {
@@ -44,7 +46,7 @@ public class MerkleNode {
 		if (rightChild == null)
 			hash = leftChild.hash;
 		else
-			hash = Util.computeHash(Util.concatenateByteArrays(leftChild.hash, rightChild.hash));
+			hash = Crypto.computeHash(Util.concatenateByteArrays(leftChild.hash, rightChild.hash));
 	}
 
 	public byte[] getHash() {
@@ -60,11 +62,11 @@ public class MerkleNode {
 	}
 
 	public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
-		MerkleNode leaf1 = new MerkleNode(Util.computeHash("a"));
-		MerkleNode leaf2 = new MerkleNode(Util.computeHash("b"));
-		MerkleNode leaf3 = new MerkleNode(Util.computeHash("c"));
-		MerkleNode leaf4 = new MerkleNode(Util.computeHash("d"));
-		MerkleNode leaf5 = new MerkleNode(Util.computeHash("e"));
+		MerkleNode leaf1 = new MerkleNode(Crypto.computeHash("a"));
+		MerkleNode leaf2 = new MerkleNode(Crypto.computeHash("b"));
+		MerkleNode leaf3 = new MerkleNode(Crypto.computeHash("c"));
+		MerkleNode leaf4 = new MerkleNode(Crypto.computeHash("d"));
+		MerkleNode leaf5 = new MerkleNode(Crypto.computeHash("e"));
 
 		List<MerkleNode> leaves = new ArrayList<>();
 		leaves.add(leaf1);
