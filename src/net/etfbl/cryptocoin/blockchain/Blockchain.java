@@ -32,7 +32,7 @@ public class Blockchain {
 		walletA.register();
 		walletB.register();
 
-		Transaction genesisTx = new Transaction();
+		Transaction genesisTx = new Transaction(Transaction.DEFAULT_FEE);
 		Transaction.Output output = new Transaction.Output(100, walletA.getPublicKey());
 		genesisTx.getOutputs().add(output);
 		genesisTx.computeHash();
@@ -42,7 +42,7 @@ public class Blockchain {
 
 		unspentTxPool.putUnspentTxOutput(new UnspentTx(genesisTx.getHash(), 0), output);
 
-		Block genesisBlock = new Block(new byte[32], new Date(), genTxs);
+		Block genesisBlock = new Block(new byte[32], new Date(), genTxs, walletA.getPublicKey());
 		genesisBlock.mine();
 		blockchain.add(genesisBlock);
 
@@ -52,20 +52,23 @@ public class Blockchain {
 		System.out.println("Wallet A private: " + Hex.toHexString(walletA.getPrivateKey().getEncoded()));
 		System.out.println("Wallet A public: " + Hex.toHexString(walletA.getPublicKey().getEncoded()));
 
-		Transaction transaction1 = new Transaction();
+		Transaction transaction1 = new Transaction(Transaction.DEFAULT_FEE);
 		Transaction.Input input1 = new Transaction.Input(genesisTx.getHash(), 0);
-		Transaction.Output output1 = new Transaction.Output(30, walletB.getPublicKey());
-		Transaction.Output output2 = new Transaction.Output(33, walletB.getPublicKey());
+		Transaction.Output output1 = new Transaction.Output(10, walletB.getPublicKey());
+		Transaction.Output output2 = new Transaction.Output(20, walletB.getPublicKey());
 		transaction1.getInputs().add(input1);
 		transaction1.getOutputs().add(output1);
 		transaction1.getOutputs().add(output2);
 		transaction1.computeSignature(0, walletA.getPrivateKey());
 		transaction1.computeHash();
 
+		Transaction coinbaseTx = new Transaction(Transaction.COINBASE_VALUE, walletA.getPublicKey());
+
 		ArrayList<Transaction> txs1 = new ArrayList<>();
+		txs1.add(coinbaseTx);
 		txs1.add(transaction1);
 
-		Block block1 = new Block(genesisBlock.getHash(), new Date(), handleTxs(txs1));
+		Block block1 = new Block(genesisBlock.getHash(), new Date(), handleTxs(txs1), walletA.getPublicKey());
 		block1.mine();
 		blockchain.add(block1);
 
@@ -81,7 +84,7 @@ public class Blockchain {
 		ArrayList<Transaction> filteredTxs = new ArrayList<>();
 
 		for (Transaction transaction : txs) {
-			if (transaction.isValid(unspentTxPool)) {
+			if (transaction.isCoinbase() || transaction.isValid(unspentTxPool)) {
 				filteredTxs.add(transaction);
 			}
 		}
@@ -100,9 +103,11 @@ public class Blockchain {
 		}
 
 		for (Transaction transaction : filteredTxs) {
-			double diff = calculateDiff(transaction);
-			/* to do */
-			transaction.getOutputs().add(new Output(diff, walletA.getPublicKey()));
+			if (!transaction.isCoinbase()) {
+				double diff = calculateDiff(transaction);
+				/* to do */
+				transaction.getOutputs().add(new Output(diff, walletA.getPublicKey()));
+			}
 		}
 
 		//cleanup
@@ -115,6 +120,7 @@ public class Blockchain {
 			}
 		}
 
+		int i = 0;
 		for (Transaction transaction : filteredTxs) {
 			ArrayList<Transaction.Output> outputs = transaction.getOutputs();
 			for (int j = 0; j < outputs.size(); j++) {
@@ -142,6 +148,6 @@ public class Blockchain {
 		for (Output out: t.getOutputs())
 			outputSum += out.getValue();
 
-		return inputSum - outputSum;
+		return inputSum - outputSum - t.getFee();
 	}
 }

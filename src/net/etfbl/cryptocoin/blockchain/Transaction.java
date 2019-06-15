@@ -15,6 +15,9 @@ import net.etfbl.cryptocoin.util.Util;
 
 public class Transaction {
 
+	public static double DEFAULT_FEE = 0.1;
+	public static double COINBASE_VALUE = 10;
+
 	public static class Input {
 
 		private byte[] previousTxHash;
@@ -69,10 +72,25 @@ public class Transaction {
 	private ArrayList<Input> inputs;
 	private ArrayList<Output> outputs;
 	private boolean coinbase;
+	private double fee;
 
-	public Transaction() {
+	public Transaction(double fee) {
+		this.fee = fee;
 		inputs = new ArrayList<>();
 		outputs = new ArrayList<>();
+
+		computeHash();
+	}
+
+	public Transaction(double value, PublicKey publicKey) {
+		coinbase = true;
+		inputs = new ArrayList<>();
+		outputs = new ArrayList<>();
+
+		Output output = new Output(value, publicKey);
+		outputs.add(output);
+
+		computeHash();
 	}
 
 	public byte[] getHash() {
@@ -89,6 +107,10 @@ public class Transaction {
 
 	public boolean isCoinbase() {
 		return coinbase;
+	}
+
+	public double getFee() {
+		return fee;
 	}
 
 	public void computeHash() {

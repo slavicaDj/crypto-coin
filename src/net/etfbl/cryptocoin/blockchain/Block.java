@@ -1,5 +1,6 @@
 package net.etfbl.cryptocoin.blockchain;
 
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -20,18 +21,15 @@ public class Block {
 	private byte[] merkleTreeRootHash;
 	private int nonce;
 
-	private Transaction coinbaseTransaction;
+//	private Transaction coinbaseTx;
 	private ArrayList<Transaction> transactions; /* Transactions won't be included in the block hash, only the merkle root hash */
 
-	public Block() {
-		transactions = new ArrayList<>();
-	}
-
-	public Block(byte[] previousBlockHash, Date timestamp, ArrayList<Transaction> transactions) {
+	public Block(byte[] previousBlockHash, Date timestamp, ArrayList<Transaction> transactions, PublicKey publicKey) {
 		super();
 		this.previousBlockHash = Arrays.copyOf(previousBlockHash, previousBlockHash.length);
 		this.timestamp = timestamp;
 		this.transactions = transactions;
+
 		computeHash();
 	}
 	
@@ -53,7 +51,7 @@ public class Block {
 
 		for (int i = 0; i < transactions.size(); i++)
 			leaves.add(new MerkleNode(transactions.get(i).getHash()));
-			
+
 		MerkleTree tree = new MerkleTree(leaves);
 		merkleTreeRootHash = tree.build().getHash();
 	}
@@ -73,6 +71,16 @@ public class Block {
 		}
 	}
 
+	private double collectFees() {
+		double fees = 0;
+
+		for (Transaction transaction : transactions) {
+			fees += transaction.getFee();
+		}
+
+		return fees;
+	}
+
 	public byte[] getHash() {
 		return hash;
 	}
@@ -87,6 +95,18 @@ public class Block {
 
 	public byte[] getMerkleRootHash() {
 		return merkleTreeRootHash;
+	}
+
+	public byte[] getMerkleTreeRootHash() {
+		return merkleTreeRootHash;
+	}
+
+	public int getNonce() {
+		return nonce;
+	}
+
+	public ArrayList<Transaction> getTransactions() {
+		return transactions;
 	}
 
 	@Override
