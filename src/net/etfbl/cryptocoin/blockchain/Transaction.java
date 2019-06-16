@@ -5,7 +5,9 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 import org.bouncycastle.util.encoders.Hex;
@@ -22,11 +24,13 @@ public class Transaction {
 
 		private byte[] previousTxHash;
 		private int outputIndex;
+		private int previousBlockHeight;
 		private byte[] signature;
 
-		public Input(byte[] previousTxHash, int outputIndex) {
+		public Input(byte[] previousTxHash, int outputIndex, int previousBlockHeight) {
 			this.previousTxHash = Arrays.copyOf(previousTxHash, previousTxHash.length);
 			this.outputIndex = outputIndex;
+			this.previousBlockHeight = previousBlockHeight;
 		}
 
 		public byte[] getPreviousTxHash() {
@@ -37,8 +41,18 @@ public class Transaction {
 			return outputIndex;
 		}
 
+		public int getPreviousBlockHeight() {
+			return previousBlockHeight;
+		}
+
 		public byte[] getSignature() {
 			return signature;
+		}
+
+		@Override
+		public String toString() {
+			return "Input [previousTxHash=" + Hex.toHexString(previousTxHash) + ", outputIndex=" + outputIndex
+					+ ", previousBlockHeight=" + previousBlockHeight + "]";
 		}
 
 	}
@@ -63,7 +77,7 @@ public class Transaction {
 
 		@Override
 		public String toString() {
-			return "[amount=" + amount + ",\npkRecipient=" + Hex.toHexString(pkRecipient.getEncoded()) + "]";
+			return "[amount=" + amount + ",\npkRecipient=" + Hex.toHexString(pkRecipient.getEncoded()) + "]\n";
 		}
 
 	}
@@ -73,17 +87,20 @@ public class Transaction {
 	private ArrayList<Output> outputs;
 	private boolean coinbase;
 	private double fee;
+	private int blockHeight;
 
-	public Transaction(double fee) {
+	public Transaction(double fee, int blockHeight) {
 		this.fee = fee;
+		this.blockHeight = blockHeight;
 		inputs = new ArrayList<>();
 		outputs = new ArrayList<>();
 
 		computeHash();
 	}
 
-	public Transaction(double value, PublicKey publicKey) {
+	public Transaction(double value, PublicKey publicKey, int blockHeight) {
 		coinbase = true;
+		this.blockHeight = blockHeight;
 		inputs = new ArrayList<>();
 		outputs = new ArrayList<>();
 
@@ -113,6 +130,10 @@ public class Transaction {
 		return fee;
 	}
 
+	public int getBlockHeight() {
+		return blockHeight;
+	}
+
 	public void computeHash() {
 		hash = Crypto.computeHash(getBytes());
 	}
@@ -126,6 +147,7 @@ public class Transaction {
 			byteBuffer.putInt(input.outputIndex);
 			byte[] outputIndex = byteBuffer.array();
 			byte[] signature = input.signature;
+			byte[] prevBlockHeight = Util.getByteArray(input.getPreviousBlockHeight());
 
 			if (previousTxHash != null)
 				for (int i = 0; i < previousTxHash.length; i++)
@@ -133,6 +155,9 @@ public class Transaction {
 
 			for (int i = 0; i < outputIndex.length; i++)
 				bytes.add(outputIndex[i]);
+
+			for (int i = 0; i < prevBlockHeight.length; i++)
+				bytes.add(prevBlockHeight[i]);
 
 			if (signature != null)
 				for (int i = 0; i < signature.length; i++)
@@ -178,6 +203,12 @@ public class Transaction {
 		for (int i = 0; i < outputIndex.length; i++)
 			bytes.add(outputIndex[i]);
 
+		ByteBuffer byteBuf = ByteBuffer.allocate(Integer.SIZE / 8);
+		byteBuf.putInt(input.previousBlockHeight);
+		byte[] blockHeightBytes = byteBuf.array();
+		for (int i = 0; i < blockHeightBytes.length; i++)
+			bytes.add(blockHeightBytes[i]);
+
 		for (Output output : outputs) {
 			ByteBuffer byteBufferOutput = ByteBuffer.allocate(Double.SIZE / 8);
 			byteBufferOutput.putDouble(output.amount);
@@ -206,16 +237,20 @@ public class Transaction {
 			Input input = inputs.get(i);
 			byte[] prevTxHash = input.getPreviousTxHash();
 			int outIndex = input.getOutputIndex();
+			int prevBlockHeight = input.getPreviousBlockHeight();
 
-			UnspentTx unspentTx = new UnspentTx(prevTxHash, outIndex);
+			UnspentTx unspentTx = new UnspentTx(prevTxHash, outIndex, prevBlockHeight);
 
 			if (!unspentTxPool.contains(unspentTx)) {
 				System.out.println("Invalid transaction! Transaction trying to use nonexisting unspent output!");
+				System.out.println("\n*************************");
+				System.out.println(this);
+				System.out.println("*************************\n");
 				return false;
 			}
 
 			if (!verifySignature(getInputBytes(i), input.getSignature(), unspentTxPool.getUnspentTxOutput(unspentTx).getPkRecipient())) {
-				System.out.println("Invalid transaction! Signature is corrupt!");
+				System.out.println("Invalid transaction! Signature is corrupt (" + i + ")!" + this);
 				return false;
 			}
 
@@ -252,4 +287,19 @@ public class Transaction {
 	private boolean verifySignature(byte[] data, byte[] signature, PublicKey publicKey) {
 		return Crypto.verifySignature(publicKey, data, signature);
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Transaction basic info: [hash=" + Hex.toHexString(hash) + ", coinbase=" + coinbase + ", fee=" + fee + "]\n");
+		for (Input in : inputs) {
+			sb.append(in);
+		}
+		sb.append("\n");
+		for (Output out: outputs) {
+			sb.append(out);
+		}
+		return sb.toString();
+	}
+
 }

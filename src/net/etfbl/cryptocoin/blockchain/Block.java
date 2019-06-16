@@ -24,7 +24,7 @@ public class Block {
 //	private Transaction coinbaseTx;
 	private ArrayList<Transaction> transactions; /* Transactions won't be included in the block hash, only the merkle root hash */
 
-	public Block(byte[] previousBlockHash, Date timestamp, ArrayList<Transaction> transactions, PublicKey publicKey) {
+	public Block(byte[] previousBlockHash, Date timestamp, ArrayList<Transaction> transactions) {
 		super();
 		this.previousBlockHash = Arrays.copyOf(previousBlockHash, previousBlockHash.length);
 		this.timestamp = timestamp;

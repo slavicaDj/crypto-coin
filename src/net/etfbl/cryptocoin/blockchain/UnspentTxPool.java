@@ -64,7 +64,7 @@ public class UnspentTxPool {
 		for (UnspentTx utx : unspentTxs.keySet()) {
 			sb.append(utx).append("\n");
 			sb.append(unspentTxs.get(utx)).append("\n");
-			sb.append("----");
+			sb.append("----\n");
 		}
 		
 		return sb.toString();
