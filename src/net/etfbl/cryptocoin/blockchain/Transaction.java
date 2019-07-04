@@ -1,27 +1,35 @@
 package net.etfbl.cryptocoin.blockchain;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
 
 import org.bouncycastle.util.encoders.Hex;
 
+import net.etfbl.cryptocoin.leveldb.LevelDBHandler;
 import net.etfbl.cryptocoin.util.Crypto;
 import net.etfbl.cryptocoin.util.Util;
 
-public class Transaction {
+public class Transaction implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5926299142781689209L;
 	public static double DEFAULT_FEE = 0.1;
 	public static double COINBASE_VALUE = 10;
 
-	public static class Input {
+	public static class Input implements Serializable {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 4577379126272158863L;
 		private byte[] previousTxHash;
 		private int outputIndex;
 		private int previousBlockHeight;
@@ -57,8 +65,12 @@ public class Transaction {
 
 	}
 
-	public static class Output {
+	public static class Output implements Serializable {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 6483601312507253277L;
 		private double amount;
 		private PublicKey pkRecipient;
 
@@ -229,7 +241,7 @@ public class Transaction {
 		return bytesArray;
 	}
 
-	public boolean isValid(UnspentTxPool unspentTxPool) {
+	public boolean isValid() {
 		Set<UnspentTx> usedUnspentTx = new HashSet<>();
 		int inputSum = 0;
 
@@ -241,15 +253,18 @@ public class Transaction {
 
 			UnspentTx unspentTx = new UnspentTx(prevTxHash, outIndex, prevBlockHeight);
 
-			if (!unspentTxPool.contains(unspentTx)) {
+			if (LevelDBHandler.getOutput(unspentTx) == null) {
 				System.out.println("Invalid transaction! Transaction trying to use nonexisting unspent output!");
-				System.out.println("\n*************************");
+				System.out.println("\n*********This transaction****************");
 				System.out.println(this);
-				System.out.println("*************************\n");
+				System.out.println("***********This transaction**************\n");
+				System.out.println("\n*********Unspent transaction****************");
+				System.out.println(unspentTx);
+				System.out.println("***********Unspent transaction**************\n");
 				return false;
 			}
 
-			if (!verifySignature(getInputBytes(i), input.getSignature(), unspentTxPool.getUnspentTxOutput(unspentTx).getPkRecipient())) {
+			if (!verifySignature(getInputBytes(i), input.getSignature(), LevelDBHandler.getOutput(unspentTx).getPkRecipient())) {
 				System.out.println("Invalid transaction! Signature is corrupt (" + i + ")!" + this);
 				return false;
 			}
@@ -259,7 +274,7 @@ public class Transaction {
 				return false;
 			}
 
-			inputSum += unspentTxPool.getUnspentTxOutput(unspentTx).amount;
+			inputSum += LevelDBHandler.getOutput(unspentTx).amount;
 		}
 
 		int outputSum = 0;

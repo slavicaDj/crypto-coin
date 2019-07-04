@@ -1,6 +1,6 @@
 package net.etfbl.cryptocoin.blockchain;
 
-import java.security.PublicKey;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -13,15 +13,18 @@ import net.etfbl.cryptocoin.merkletree.MerkleTree;
 import net.etfbl.cryptocoin.util.Crypto;
 import net.etfbl.cryptocoin.util.Util;
 
-public class Block {
+public class Block implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3265660258469067295L;
 	private byte[] hash;
 	private byte[] previousBlockHash;
 	private Date timestamp;
 	private byte[] merkleTreeRootHash;
 	private int nonce;
 
-//	private Transaction coinbaseTx;
 	private ArrayList<Transaction> transactions; /* Transactions won't be included in the block hash, only the merkle root hash */
 
 	public Block(byte[] previousBlockHash, Date timestamp, ArrayList<Transaction> transactions) {
@@ -71,16 +74,6 @@ public class Block {
 		}
 	}
 
-	private double collectFees() {
-		double fees = 0;
-
-		for (Transaction transaction : transactions) {
-			fees += transaction.getFee();
-		}
-
-		return fees;
-	}
-
 	public byte[] getHash() {
 		return hash;
 	}
@@ -116,6 +109,4 @@ public class Block {
 				+ ",\nnonce=" + nonce;
 	}
 
-	
-	
 }

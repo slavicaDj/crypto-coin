@@ -1,14 +1,16 @@
 package net.etfbl.cryptocoin.blockchain;
 
-import java.security.PublicKey;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
-import net.etfbl.cryptocoin.blockchain.Transaction.Output;
+public class UnspentTxPool implements Serializable {
 
-public class UnspentTxPool {
-
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4083980934184548108L;
 	private HashMap<UnspentTx, Transaction.Output> unspentTxs;
 
 	public UnspentTxPool() {
@@ -45,18 +47,6 @@ public class UnspentTxPool {
 		return allUTXO;
 	}
 
-	public double getBalance(PublicKey publicKey) {
-		double balance = 0;
-
-		for (UnspentTx unspentTx : unspentTxs.keySet()) {
-			Output output = unspentTxs.get(unspentTx);
-			if (output != null && output.getPkRecipient().equals(publicKey))
-				balance += output.getValue();
-		}
-
-		return balance;
-	}
-
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -69,7 +59,5 @@ public class UnspentTxPool {
 		
 		return sb.toString();
 	}
-
-	
 
 }

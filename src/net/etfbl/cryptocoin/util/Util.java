@@ -1,9 +1,12 @@
 package net.etfbl.cryptocoin.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
 import java.security.Key;
@@ -94,6 +97,42 @@ public class Util {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		return null;
+	}
+
+	public static <T> byte[] getBytes(T t) {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			ObjectOutputStream oos = new ObjectOutputStream(baos);
+			oos.writeObject(t);
+			oos.close();
+			baos.close();
+
+			return baos.toByteArray();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T getObject(byte[] bytes) {
+		try {
+			ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+			ObjectInputStream ois = new ObjectInputStream(bais);
+
+			T t = null;
+			t = (T) ois.readObject();
+			ois.close();
+
+			return t;
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+
 		return null;
 	}
 }

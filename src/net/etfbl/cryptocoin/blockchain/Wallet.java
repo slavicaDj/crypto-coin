@@ -3,7 +3,6 @@ package net.etfbl.cryptocoin.blockchain;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.util.ArrayList;
 
 import org.bouncycastle.util.encoders.Hex;
 

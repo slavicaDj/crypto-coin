@@ -1,12 +1,16 @@
 package net.etfbl.cryptocoin.blockchain;
 
+import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Date;
 
 import org.bouncycastle.util.encoders.Hex;
 
-public class UnspentTx {
+public class UnspentTx implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 141837573134784287L;
 	private byte[] txHash;
 	private int index;
 	private int blockHeight;
@@ -63,5 +67,4 @@ public class UnspentTx {
 				+ "]";
 	}
 
-	
 }
