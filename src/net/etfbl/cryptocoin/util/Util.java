@@ -11,9 +11,29 @@ import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
 import java.security.Key;
 import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.ECGenParameterSpec;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.ECPoint;
+import java.security.spec.ECPublicKeySpec;
+import java.security.spec.EncodedKeySpec;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
+import org.bouncycastle.asn1.x9.ECNamedCurveTable;
+import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.jcajce.provider.asymmetric.util.EC5Util;
+import org.bouncycastle.jce.ECPointUtil;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
+import org.bouncycastle.jce.spec.ECNamedCurveSpec;
+import org.bouncycastle.math.ec.ECCurve;
+import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
@@ -98,6 +118,21 @@ public class Util {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	public static PublicKey getPublicKeyFromBytes(byte[] pubKey) {
+		PublicKey publicKey = null;
+
+		try {
+			X509EncodedKeySpec keySpec = new X509EncodedKeySpec(pubKey);
+			KeyFactory kf = KeyFactory.getInstance("EC");
+			publicKey = kf.generatePublic(keySpec);
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+
+		return publicKey;
 	}
 
 	public static <T> byte[] getBytes(T t) {

@@ -1,8 +1,18 @@
 package net.etfbl.cryptocoin.test;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PublicKey;
 import java.security.Security;
+import java.security.spec.InvalidKeySpecException;
+
+import javax.xml.bind.DatatypeConverter;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.util.encoders.Hex;
+
+import net.etfbl.cryptocoin.blockchain.Wallet;
+import net.etfbl.cryptocoin.util.Util;
 
 public class Test {
 	
@@ -10,7 +20,7 @@ public class Test {
 		Security.addProvider(new BouncyCastleProvider());
 	}
 
-	public static void main(String[] args){
+	public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException{
 		
 		/* block mining */
 //		Block genesisBlock = new Block(new byte[256], new Date(), "Hi, I'm the genesis block!");
@@ -38,6 +48,12 @@ public class Test {
 //		catch(Exception e) {
 //			e.printStackTrace();
 //		}
+
+		Wallet wallet = new Wallet();
+		wallet.register();
+		System.out.println(Hex.toHexString(wallet.getPublicKey().getEncoded()));
+		PublicKey pk = Util.getPublicKeyFromBytes(DatatypeConverter.parseHexBinary(Hex.toHexString(wallet.getPublicKey().getEncoded())));
+		System.out.println(Hex.toHexString(pk.getEncoded()));
 	}
 
 }
