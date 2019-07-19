@@ -1,6 +1,7 @@
 package net.etfbl.cryptocoin.blockchain;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -21,8 +22,8 @@ public class Transaction implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 5926299142781689209L;
-	public static double DEFAULT_FEE = 0.1;
-	public static double COINBASE_VALUE = 10;
+	public static BigDecimal DEFAULT_FEE = BigDecimal.valueOf(0.1);
+	public static BigDecimal COINBASE_VALUE = new BigDecimal(10);
 
 	public static class Input implements Serializable {
 
@@ -71,15 +72,15 @@ public class Transaction implements Serializable {
 		 * 
 		 */
 		private static final long serialVersionUID = 6483601312507253277L;
-		private double amount;
+		private BigDecimal amount;
 		private PublicKey pkRecipient;
 
-		public Output(double value, PublicKey pkRecipient) {
-			this.amount = value;
+		public Output(BigDecimal amount, PublicKey pkRecipient) {
+			this.amount = amount;
 			this.pkRecipient = pkRecipient;
 		}
 
-		public double getValue() {
+		public BigDecimal getAmount() {
 			return amount;
 		}
 
@@ -98,10 +99,10 @@ public class Transaction implements Serializable {
 	private ArrayList<Input> inputs;
 	private ArrayList<Output> outputs;
 	private boolean coinbase;
-	private double fee;
+	private BigDecimal fee;
 	private int blockHeight;
 
-	public Transaction(double fee, int blockHeight) {
+	public Transaction(BigDecimal fee, int blockHeight) {
 		this.fee = fee;
 		this.blockHeight = blockHeight;
 		inputs = new ArrayList<>();
@@ -110,13 +111,13 @@ public class Transaction implements Serializable {
 		computeHash();
 	}
 
-	public Transaction(double value, PublicKey publicKey, int blockHeight) {
+	public Transaction(BigDecimal amount, PublicKey publicKey, int blockHeight) {
 		coinbase = true;
 		this.blockHeight = blockHeight;
 		inputs = new ArrayList<>();
 		outputs = new ArrayList<>();
 
-		Output output = new Output(value, publicKey);
+		Output output = new Output(amount, publicKey);
 		outputs.add(output);
 
 		computeHash();
@@ -138,7 +139,7 @@ public class Transaction implements Serializable {
 		return coinbase;
 	}
 
-	public double getFee() {
+	public BigDecimal getFee() {
 		return fee;
 	}
 
@@ -147,53 +148,7 @@ public class Transaction implements Serializable {
 	}
 
 	public void computeHash() {
-		hash = Crypto.computeHash(getBytes());
-	}
-
-	private byte[] getBytes() {
-		ArrayList<Byte> bytes = new ArrayList<Byte>();
-
-		for (Input input : inputs) {
-			byte[] previousTxHash = input.previousTxHash;
-			ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.SIZE / 8);
-			byteBuffer.putInt(input.outputIndex);
-			byte[] outputIndex = byteBuffer.array();
-			byte[] signature = input.signature;
-			byte[] prevBlockHeight = Util.getByteArray(input.getPreviousBlockHeight());
-
-			if (previousTxHash != null)
-				for (int i = 0; i < previousTxHash.length; i++)
-					bytes.add(previousTxHash[i]);
-
-			for (int i = 0; i < outputIndex.length; i++)
-				bytes.add(outputIndex[i]);
-
-			for (int i = 0; i < prevBlockHeight.length; i++)
-				bytes.add(prevBlockHeight[i]);
-
-			if (signature != null)
-				for (int i = 0; i < signature.length; i++)
-					bytes.add(signature[i]);
-		}
-
-		for (Output output : outputs) {
-			ByteBuffer byteBuffer = ByteBuffer.allocate(Double.SIZE / 8);
-			byteBuffer.putDouble(output.amount);
-			byte[] value = byteBuffer.array();
-			byte[] address = (output.getPkRecipient()).getEncoded();
-
-			for (int i = 0; i < value.length; i++)
-				bytes.add(value[i]);
-
-			for (int i = 0; i < address.length; i++)
-				bytes.add(address[i]);
-		}
-
-		byte[] bytesArr = new byte[bytes.size()];
-		for (int i = 0; i < bytes.size(); i++)
-			bytesArr[i] = bytes.get(i);
-
-		return bytesArr;
+		hash = Crypto.computeHash(Util.getBytes(this));
 	}
 
 	public byte[] getInputBytes(int index) {
@@ -223,7 +178,7 @@ public class Transaction implements Serializable {
 
 		for (Output output : outputs) {
 			ByteBuffer byteBufferOutput = ByteBuffer.allocate(Double.SIZE / 8);
-			byteBufferOutput.putDouble(output.amount);
+			byteBufferOutput.putDouble(output.amount.doubleValue());
 			byte[] value = byteBufferOutput.array();
 			byte[] address = output.pkRecipient.getEncoded();
 
@@ -243,7 +198,7 @@ public class Transaction implements Serializable {
 
 	public boolean isValid() {
 		Set<UnspentTx> usedUnspentTx = new HashSet<>();
-		int inputSum = 0;
+		BigDecimal inputSum = new BigDecimal(0);
 
 		for (int i = 0; i < inputs.size(); i++) {
 			Input input = inputs.get(i);
@@ -274,20 +229,20 @@ public class Transaction implements Serializable {
 				return false;
 			}
 
-			inputSum += LevelDBHandler.getOutput(unspentTx).amount;
+			inputSum = inputSum.add(LevelDBHandler.getOutput(unspentTx).amount);
 		}
 
-		int outputSum = 0;
+		BigDecimal outputSum = new BigDecimal(0);
 
 		for (Output output : outputs) {
-			if(output.amount <= 0) {
+			if(output.amount.compareTo(new BigDecimal(0)) <= 0) {
 				System.out.println("Invalid transaction! Transaction contains negative output amounts!");
 				return false;
 			}
-			outputSum += output.amount;
+			outputSum = outputSum.add(output.amount);
 		}
 
-		if (outputSum > inputSum) {
+		if (outputSum.compareTo(inputSum) >= 0) {
 			System.out.println("Invalid transaction! Output sum is larger than input sum!");
 			return false;
 		}
@@ -296,7 +251,7 @@ public class Transaction implements Serializable {
 	}
 
 	public void computeSignature(int index, PrivateKey privateKey) {
-			inputs.get(index).signature = Crypto.signData(privateKey, getInputBytes(index));
+		inputs.get(index).signature = Crypto.signData(privateKey, getInputBytes(index));
 	}
 
 	private boolean verifySignature(byte[] data, byte[] signature, PublicKey publicKey) {
@@ -306,7 +261,7 @@ public class Transaction implements Serializable {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Transaction basic info: [hash=" + Hex.toHexString(hash) + ", coinbase=" + coinbase + ", fee=" + fee + "]\n");
+		sb.append("Transaction basic info: [hash=" + Hex.toHexString(hash) + ", coinbase=" + coinbase + ", fee=" + fee.doubleValue() + "]\n");
 		for (Input in : inputs) {
 			sb.append(in);
 		}

@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Random;
 
 import org.bouncycastle.util.encoders.Hex;
 
@@ -36,7 +35,7 @@ public class Block implements Serializable {
 		computeHash();
 	}
 	
-	private void computeHash() {
+	public void computeHash() {
 
 		byte[] blockBytes = Util.concatenateByteArrays(previousBlockHash,
 				  Util.getByteArray(timestamp.getTime()),
@@ -46,7 +45,7 @@ public class Block implements Serializable {
 		hash = Crypto.computeHash(blockBytes);
 	}
 
-	private void computeMerkleTreeRootHash() {
+	public void computeMerkleTreeRootHash() {
 		if (transactions == null || transactions.size() < 1)
 			return;
 			
@@ -57,21 +56,6 @@ public class Block implements Serializable {
 
 		MerkleTree tree = new MerkleTree(leaves);
 		merkleTreeRootHash = tree.build().getHash();
-	}
-
-	public void mine() {
-		if (transactions == null || transactions.size() < 1) {
-			System.out.println("Cannot mine an empty block!"); //Make custom exception
-			return;
-		}
-
-		Random random = new Random(new Date().getTime());
-		computeMerkleTreeRootHash();
-
-		while(!Util.checkFirstZeroBytes(hash)) {
-			nonce = random.nextInt(Integer.MAX_VALUE);
-			computeHash();
-		}
 	}
 
 	public byte[] getHash() {
@@ -86,10 +70,6 @@ public class Block implements Serializable {
 		return timestamp;
 	}
 
-	public byte[] getMerkleRootHash() {
-		return merkleTreeRootHash;
-	}
-
 	public byte[] getMerkleTreeRootHash() {
 		return merkleTreeRootHash;
 	}
@@ -100,6 +80,10 @@ public class Block implements Serializable {
 
 	public ArrayList<Transaction> getTransactions() {
 		return transactions;
+	}
+
+	public void setNonce(int nonce) {
+		this.nonce = nonce;
 	}
 
 	@Override

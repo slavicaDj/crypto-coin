@@ -2,42 +2,36 @@ package net.etfbl.cryptocoin.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.security.Key;
 import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
+import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.interfaces.ECPublicKey;
-import java.security.spec.ECGenParameterSpec;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.ECPoint;
-import java.security.spec.ECPublicKeySpec;
-import java.security.spec.EncodedKeySpec;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
-import org.bouncycastle.asn1.x9.ECNamedCurveTable;
-import org.bouncycastle.asn1.x9.X9ECParameters;
-import org.bouncycastle.jcajce.provider.asymmetric.util.EC5Util;
-import org.bouncycastle.jce.ECPointUtil;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
-import org.bouncycastle.jce.spec.ECNamedCurveSpec;
-import org.bouncycastle.math.ec.ECCurve;
-import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
-import org.bouncycastle.util.io.pem.PemWriter;
+import org.bouncycastle.openssl.PEMDecryptorProvider;
+import org.bouncycastle.openssl.PEMEncryptedKeyPair;
+import org.bouncycastle.openssl.PEMEncryptor;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaMiscPEMGenerator;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
+import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
+import org.bouncycastle.openssl.jcajce.JcePEMEncryptorBuilder;
 
 import net.etfbl.cryptocoin.blockchain.Blockchain;
 
@@ -85,39 +79,75 @@ public class Util {
 		return false;
 	}
 
-	public static void saveKeyInPemFile(Key key, String description, String filePath) {
-		PemWriter pemWriter = null;
-
+	public static void saveKeyInPemFile(Key key, String passphrase, String filePath) {
 		try {
-			pemWriter = new PemWriter(new OutputStreamWriter(new FileOutputStream(filePath)));
-			PemObject pemObject = new PemObject(description, key.getEncoded());
+			JcaPEMWriter jcaPEMWriter = new JcaPEMWriter(new PrintWriter(filePath));
 
-			pemWriter.writeObject(pemObject);
-			pemWriter.close();
+			if (passphrase != null) {
+				PEMEncryptor pemEncryptor = new JcePEMEncryptorBuilder("AES-128-CBC").build(passphrase.toCharArray());
+				JcaMiscPEMGenerator pemGenerator = new JcaMiscPEMGenerator(key, pemEncryptor);
+				jcaPEMWriter.writeObject(pemGenerator);
+			}
+			else
+				jcaPEMWriter.writeObject(key);
+			
+			jcaPEMWriter.flush();
+			jcaPEMWriter.close();
 		}
-		catch(Exception e) {
+		catch (Exception e) {
 			e.printStackTrace();
 		}
+//		JcaPEMWriter pemWriter = null;
+//
+//		try {
+//			pemWriter = new JcaPEMWriter(new OutputStreamWriter(new FileOutputStream(filePath)));
+//			PemObject pemObject = new PemObject(description, key.getEncoded());
+//
+//			pemWriter.writeObject(pemObject);
+//			pemWriter.close();
+//		}
+//		catch(Exception e) {
+//			e.printStackTrace();
+//		}
 	}
 
-	public static PrivateKey readKeyFromPemFile(String filePath) {
+	public static KeyPair readKeysFromPemFile(String passphrase, String filePath) {
+		KeyPair keyPair = null;
 		try {
-			PemReader pemReader = new PemReader(new FileReader(filePath));
-			PemObject pemObject = pemReader.readPemObject();
-			byte[] pemObjectContent = pemObject.getContent();
-
-			pemReader.close();
-
-			PKCS8EncodedKeySpec encodedKeySpec = new PKCS8EncodedKeySpec(pemObjectContent);
-			KeyFactory keyFactory = KeyFactory.getInstance("ECDSA", "BC");
-			PrivateKey privateKey = keyFactory.generatePrivate(encodedKeySpec);
-			
-			return privateKey;
-
-		} catch (Exception e) {
+			PEMParser pemParser = new PEMParser(new FileReader(new File(filePath)));
+			Object object = pemParser.readObject();
+			PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build(passphrase.toCharArray());
+			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+	
+			if (object instanceof PEMEncryptedKeyPair)
+				keyPair = converter.getKeyPair(((PEMEncryptedKeyPair) object).decryptKeyPair(decProv));
+			else
+				keyPair = converter.getKeyPair((PEMKeyPair) object);
+	
+			pemParser.close();
+		}
+		catch (Exception e) {
 			e.printStackTrace();
 		}
-		return null;
+
+		return keyPair;
+//		try {
+//			PemReader pemReader = new PemReader(new FileReader(filePath));
+//			PemObject pemObject = pemReader.readPemObject();
+//			byte[] pemObjectContent = pemObject.getContent();
+//
+//			pemReader.close();
+//
+//			PKCS8EncodedKeySpec encodedKeySpec = new PKCS8EncodedKeySpec(pemObjectContent);
+//			KeyFactory keyFactory = KeyFactory.getInstance("ECDSA", "BC");
+//			PrivateKey privateKey = keyFactory.generatePrivate(encodedKeySpec);
+//			
+//			return privateKey;
+//
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//		return null;
 	}
 
 	public static PublicKey getPublicKeyFromBytes(byte[] pubKey) {

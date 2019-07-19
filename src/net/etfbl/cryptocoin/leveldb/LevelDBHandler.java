@@ -4,7 +4,9 @@ import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.security.PublicKey;
+import java.util.ArrayList;
 
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
@@ -114,6 +116,30 @@ public class LevelDBHandler {
 		return block;
 	}
 
+	public static ArrayList<Block> getAllBlocks() {
+		ArrayList<Block> blocks = new ArrayList<>();
+		Options options = new Options();
+		options.createIfMissing(true);
+
+		try {
+			DB db = factory.open(new File(DB_BLOCKS), options);
+			DBIterator iterator = db.iterator();
+
+			for(iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
+				byte[] value = iterator.peekNext().getValue();
+				Block block = Util.getObject(value);
+				blocks.add(block);
+			}
+
+			iterator.close();
+			db.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return blocks;
+	}
+
 	public static Output getOutput(UnspentTx unspentTx) {
 		Output output = null;
 		Options options = new Options();
@@ -163,8 +189,8 @@ public class LevelDBHandler {
 		return null;
 	}
 
-	public static double getBalance(PublicKey pk) {
-		double balance = 0;
+	public static BigDecimal getBalance(PublicKey pk) {
+		BigDecimal balance = new BigDecimal(0);
 		Options options = new Options();
 		options.createIfMissing(true);
 
@@ -177,7 +203,7 @@ public class LevelDBHandler {
 				Output output = Util.getObject(value);
 
 				if (output != null && output.getPkRecipient().equals(pk))
-					balance += output.getValue();
+					balance = balance.add(output.getAmount());
 			}
 
 			iterator.close();
