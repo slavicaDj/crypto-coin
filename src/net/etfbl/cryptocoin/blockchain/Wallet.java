@@ -20,8 +20,7 @@ public class Wallet {
 		KeyPair keyPair = Crypto.computeKeyPair();
 		publicKey = keyPair.getPublic();
 
-		//later on, use password to encrypt the pem file
-		Util.saveKeyInPemFile(keyPair.getPrivate(), "prik", "" + Util.filePath + Hex.toHexString(publicKey.getEncoded()));
+		Util.saveKeyInPemFile(keyPair.getPrivate(), "pass", "" + Util.filePath + Hex.toHexString(publicKey.getEncoded()));
 	}
 
 	public PublicKey getPublicKey() {
@@ -29,6 +28,6 @@ public class Wallet {
 	}
 
 	public PrivateKey getPrivateKey() {
-		return Util.readKeyFromPemFile(Util.filePath + Hex.toHexString(publicKey.getEncoded()));
+		return Util.readKeysFromPemFile("pass", Util.filePath + Hex.toHexString(publicKey.getEncoded())).getPrivate();
 	}
 }
