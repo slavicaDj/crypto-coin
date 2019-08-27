@@ -45,8 +45,10 @@ public class MerkleNode {
 	public void computeHash() {
 		if (rightChild == null)
 			hash = leftChild.hash;
-		else
-			hash = Crypto.computeHash(Util.concatenateByteArrays(leftChild.hash, rightChild.hash));
+		else {
+			byte[] concat = Util.concatenateByteArrays(leftChild.hash, rightChild.hash);
+			hash = Crypto.computeHash(concat);
+		}
 	}
 
 	public byte[] getHash() {
@@ -76,6 +78,8 @@ public class MerkleNode {
 		leaves.add(leaf5);
 
 		MerkleTree tree = new MerkleTree(leaves);
-		System.out.println("root: " + Hex.toHexString(tree.build().hash));
+		tree.build();
+
+		System.out.println(Hex.toHexString(tree.getRoot().getHash()));
 	}
 }

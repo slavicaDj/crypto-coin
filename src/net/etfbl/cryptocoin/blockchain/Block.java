@@ -12,7 +12,7 @@ import net.etfbl.cryptocoin.merkletree.MerkleTree;
 import net.etfbl.cryptocoin.util.Crypto;
 import net.etfbl.cryptocoin.util.Util;
 
-public class Block implements Serializable {
+public class Block implements Serializable, Comparable<Block> {
 
 	/**
 	 * 
@@ -24,7 +24,7 @@ public class Block implements Serializable {
 	private byte[] merkleTreeRootHash;
 	private int nonce;
 
-	private ArrayList<Transaction> transactions; /* Transactions won't be included in the block hash, only the merkle root hash */
+	private ArrayList<Transaction> transactions; /* Transactions won't be included in the block hash, only the Merkle root hash */
 
 	public Block(byte[] previousBlockHash, Date timestamp, ArrayList<Transaction> transactions) {
 		super();
@@ -91,6 +91,11 @@ public class Block implements Serializable {
 		return "hash=" + Hex.toHexString(hash) + ",\npreviousBlockHash=" + Hex.toHexString(previousBlockHash)
 				+ ",\ntimestamp=" + timestamp + ",\nmerkleTreeRootHash=" + Hex.toHexString(merkleTreeRootHash)
 				+ ",\nnonce=" + nonce;
+	}
+
+	@Override
+	public int compareTo(Block b) {
+		return this.getTimestamp().compareTo(b.getTimestamp());
 	}
 
 }

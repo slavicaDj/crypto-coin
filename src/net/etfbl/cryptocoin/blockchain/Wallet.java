@@ -4,10 +4,8 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
-import org.bouncycastle.util.encoders.Hex;
-
+import net.etfbl.cryptocoin.util.Consts;
 import net.etfbl.cryptocoin.util.Crypto;
-import net.etfbl.cryptocoin.util.Util;
 
 public class Wallet {
 
@@ -16,18 +14,30 @@ public class Wallet {
 	public Wallet() {
 	}
 
-	public void register() {
+	public void register(char[] passphrase, String filePath) {
 		KeyPair keyPair = Crypto.computeKeyPair();
 		publicKey = keyPair.getPublic();
 
-		Util.saveKeyInPemFile(keyPair.getPrivate(), "pass", "" + Util.filePath + Hex.toHexString(publicKey.getEncoded()));
+		Crypto.saveKeyInPemFile(keyPair.getPrivate(), passphrase, filePath);
+	}
+
+	public boolean login(char[] passphrase) {
+		KeyPair keyPair = Crypto.readKeysFromPemFile(passphrase, Consts.MY_WALLET_PATH + Consts.WALLET_FILE_NAME);
+
+		if (keyPair == null)
+			return false;
+
+		publicKey = keyPair.getPublic();
+		return true;
 	}
 
 	public PublicKey getPublicKey() {
 		return publicKey;
 	}
 
-	public PrivateKey getPrivateKey() {
-		return Util.readKeysFromPemFile("pass", Util.filePath + Hex.toHexString(publicKey.getEncoded())).getPrivate();
+	public PrivateKey getPrivateKey(char[] passphrase) {
+		return Crypto.readKeysFromPemFile(passphrase, Consts.MY_WALLET_PATH + Consts.WALLET_FILE_NAME).getPrivate();
 	}
+
+	
 }

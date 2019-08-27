@@ -2,10 +2,11 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
-	<classpathentry kind="lib" path="C:/Users/ENVY/Downloads/bcprov-jdk15on-1.60.jar"/>
-	<classpathentry kind="lib" path="C:/Users/ENVY/Downloads/leveldbjni-all-1.8.jar"/>
-	<classpathentry kind="lib" path="jgoodies-forms-1.8.0.jar" sourcepath="jgoodies-forms-1.8.0-sources.jar"/>
-	<classpathentry kind="lib" path="C:/Users/ENVY/Downloads/bctls-jdk15on-162.jar"/>
-	<classpathentry kind="lib" path="C:/Users/ENVY/Downloads/bcpkix-jdk15on-162.jar"/>
+	<classpathentry kind="lib" path="D:/workspace/CryptoCoin/libs/leveldbjni-all-1.8.jar"/>
+	<classpathentry kind="lib" path="D:/workspace/CryptoCoin/libs/bctls-jdk15on-162.jar"/>
+	<classpathentry kind="lib" path="D:/workspace/CryptoCoin/libs/bcpkix-jdk15on-162.jar"/>
+	<classpathentry kind="lib" path="D:/workspace/CryptoCoin/libs/bcprov-debug-jdk15on-162.jar"/>
+	<classpathentry kind="lib" path="D:/workspace/CryptoCoin/libs/jgoodies-common-1.8.0.jar" sourcepath="jgoodies-common-1.8.0-sources.jar"/>
+	<classpathentry kind="lib" path="D:/workspace/CryptoCoin/libs/jgoodies-forms-1.8.0.jar" sourcepath="jgoodies-forms-1.8.0-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

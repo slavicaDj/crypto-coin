@@ -6,9 +6,8 @@ import java.util.List;
 public class MerkleTree {
 
 	private MerkleNode root;
-	private List<MerkleNode> nodes;
-	/* delete leaves? */
-	private List<MerkleNode> leaves;
+	private List<MerkleNode> nodes = new ArrayList<>();
+	private List<MerkleNode> leaves = new ArrayList<>();
 
 	public MerkleTree() {
 		
@@ -19,23 +18,24 @@ public class MerkleTree {
 	}
 
 	public MerkleNode build() {
-    	build(leaves);
-    	return root;
-    }
+		build(leaves);
+		return root;
+	}
 
-    public void build(List<MerkleNode> nodes) {
-    	if (nodes.size() == 1)
-    		this.root = nodes.get(0);
-        else {
-        	List<MerkleNode> parentNodes = new ArrayList<>();
-        	for (int i = 0; i < nodes.size(); i += 2) {
-        		MerkleNode rightNode = (i + 1 < nodes.size()) ? nodes.get(i + 1) : null;
-        		MerkleNode parentNode = new MerkleNode(nodes.get(i), rightNode);
-        		parentNodes.add(parentNode);
-        	}
-        	build(parentNodes);
-        }
-    }
+	private void build(List<MerkleNode> localNodes) {
+		if (localNodes.size() == 1)
+			this.root = localNodes.get(0);
+		else {
+			List<MerkleNode> parentNodes = new ArrayList<>();
+			for (int i = 0; i < localNodes.size(); i += 2) {
+				MerkleNode rightNode = (i + 1 < localNodes.size()) ? localNodes.get(i + 1) : null;
+				MerkleNode parentNode = new MerkleNode(localNodes.get(i), rightNode);
+				parentNodes.add(parentNode);
+				nodes.add(parentNode);
+			}
+			build(parentNodes);
+		}
+	}
 
 	public MerkleNode getRoot() {
 		return root;

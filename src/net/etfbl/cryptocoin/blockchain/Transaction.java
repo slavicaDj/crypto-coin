@@ -12,18 +12,18 @@ import java.util.Set;
 
 import org.bouncycastle.util.encoders.Hex;
 
+import net.etfbl.cryptocoin.exception.TransactionException;
 import net.etfbl.cryptocoin.leveldb.LevelDBHandler;
+import net.etfbl.cryptocoin.util.Consts;
 import net.etfbl.cryptocoin.util.Crypto;
 import net.etfbl.cryptocoin.util.Util;
 
-public class Transaction implements Serializable {
+public class Transaction implements Serializable{
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 5926299142781689209L;
-	public static BigDecimal DEFAULT_FEE = BigDecimal.valueOf(0.1);
-	public static BigDecimal COINBASE_VALUE = new BigDecimal(10);
 
 	public static class Input implements Serializable {
 
@@ -90,7 +90,7 @@ public class Transaction implements Serializable {
 
 		@Override
 		public String toString() {
-			return "[amount=" + amount + ",\npkRecipient=" + Hex.toHexString(pkRecipient.getEncoded()) + "]\n";
+			return "Output [amount=" + amount + ",\npkRecipient=" + Hex.toHexString(pkRecipient.getEncoded()) + "]\n";
 		}
 
 	}
@@ -196,7 +196,7 @@ public class Transaction implements Serializable {
 		return bytesArray;
 	}
 
-	public boolean isValid() {
+	public boolean isValid() throws TransactionException {
 		Set<UnspentTx> usedUnspentTx = new HashSet<>();
 		BigDecimal inputSum = new BigDecimal(0);
 
@@ -209,24 +209,18 @@ public class Transaction implements Serializable {
 			UnspentTx unspentTx = new UnspentTx(prevTxHash, outIndex, prevBlockHeight);
 
 			if (LevelDBHandler.getOutput(unspentTx) == null) {
-				System.out.println("Invalid transaction! Transaction trying to use nonexisting unspent output!");
-				System.out.println("\n*********This transaction****************");
-				System.out.println(this);
-				System.out.println("***********This transaction**************\n");
-				System.out.println("\n*********Unspent transaction****************");
-				System.out.println(unspentTx);
-				System.out.println("***********Unspent transaction**************\n");
-				return false;
+				throw new TransactionException(Consts.ERR_NON_EX_OUTPUT);
+//				return false;
 			}
 
 			if (!verifySignature(getInputBytes(i), input.getSignature(), LevelDBHandler.getOutput(unspentTx).getPkRecipient())) {
-				System.out.println("Invalid transaction! Signature is corrupt (" + i + ")!" + this);
-				return false;
+				throw new TransactionException(Consts.ERR_SIGN_CORRUPT);
+//				return false;
 			}
 
 			if (!usedUnspentTx.add(unspentTx)) {
-				System.out.println("Invalid transaction! Transaction trying to use the same unspent output more than once.");
-				return false;
+				throw new TransactionException(Consts.ERR_DOUBLE_SPENDING);
+//				return false;
 			}
 
 			inputSum = inputSum.add(LevelDBHandler.getOutput(unspentTx).amount);
@@ -236,18 +230,32 @@ public class Transaction implements Serializable {
 
 		for (Output output : outputs) {
 			if(output.amount.compareTo(new BigDecimal(0)) <= 0) {
-				System.out.println("Invalid transaction! Transaction contains negative output amounts!");
-				return false;
+				throw new TransactionException(Consts.ERR_NEG_AMOUNT);
+//				return false;
 			}
 			outputSum = outputSum.add(output.amount);
 		}
 
 		if (outputSum.compareTo(inputSum) >= 0) {
-			System.out.println("Invalid transaction! Output sum is larger than input sum!");
-			return false;
+			throw new TransactionException(Consts.ERR_SUM);
+//			return false;
 		}
 
 		return true;
+	}
+
+	public BigDecimal getAmount(PublicKey pkRecepient) {
+		if (pkRecepient == null)
+			return  null;
+
+		BigDecimal outputSum = new BigDecimal(0);
+
+		for (Output output : outputs) {
+			if (output.getPkRecipient().equals(pkRecepient))
+				outputSum = outputSum.add(output.amount);
+		}
+
+		return  outputSum;
 	}
 
 	public void computeSignature(int index, PrivateKey privateKey) {
@@ -261,14 +269,18 @@ public class Transaction implements Serializable {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Transaction basic info: [hash=" + Hex.toHexString(hash) + ", coinbase=" + coinbase + ", fee=" + fee.doubleValue() + "]\n");
-		for (Input in : inputs) {
+
+		sb.append("Transaction basic info: [hash=" + Hex.toHexString(hash) + ", coinbase=" + coinbase + ", fee=" + fee + ", ");
+		sb.append("blockHeight = " + blockHeight + "]\n");
+
+		for (Input in : inputs)
 			sb.append(in);
-		}
+
 		sb.append("\n");
-		for (Output out: outputs) {
+
+		for (Output out: outputs)
 			sb.append(out);
-		}
+
 		return sb.toString();
 	}
 

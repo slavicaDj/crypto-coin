@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
@@ -22,6 +23,7 @@ public class LevelDBHandler {
 
 	private static final String DB_BLOCKS = "blocks";
 	private static final String DB_UNSPENT_TX_POOL = "unspentTxPool";
+	private static final String DB_TX_POOL_HISTORY = "spentTxPool";
 	private static final String DB_LAST_BLOCK = "lastBlock";
 
 	public static void putLastBlock(Block block) {
@@ -70,6 +72,20 @@ public class LevelDBHandler {
 		}
 	}
 
+	public static void saveTxHistory(UnspentTx unspentTx, Output output) {
+		Options options = new Options();
+		options.createIfMissing(true);
+
+		try {
+			DB db = factory.open(new File(DB_TX_POOL_HISTORY), options);
+			db.put(Util.getBytes(unspentTx), Util.getBytes(output));
+
+			db.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public static void put(UnspentTx unspentTx, Output output) {
 		Options options = new Options();
 		options.createIfMissing(true);
@@ -77,6 +93,7 @@ public class LevelDBHandler {
 		try {
 			DB db = factory.open(new File(DB_UNSPENT_TX_POOL), options);
 			db.put(Util.getBytes(unspentTx), Util.getBytes(output));
+			saveTxHistory(unspentTx, output);
 
 			db.close();
 		} catch (IOException e) {
@@ -106,7 +123,8 @@ public class LevelDBHandler {
 		try {
 			DB db = factory.open(new File(DB_BLOCKS), options);
 			byte[] blockBytes = db.get(hash);
-			block = Util.getObject(blockBytes);
+			if (blockBytes != null)
+				block = Util.getObject(blockBytes);
 
 			db.close();
 		} catch (IOException e) {
@@ -136,6 +154,9 @@ public class LevelDBHandler {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+		Collections.sort(blocks);
+		Collections.reverse(blocks);
 
 		return blocks;
 	}
@@ -235,6 +256,24 @@ public class LevelDBHandler {
 		}
 
 		return maxHeight;
+	}
+
+	public static Output getOutputFromHistory(UnspentTx unspentTx) {
+		Output output = null;
+		Options options = new Options();
+		options.createIfMissing(true);
+
+		try {
+			DB db = factory.open(new File(DB_TX_POOL_HISTORY), options);
+			byte[] outputBytes = db.get(Util.getBytes(unspentTx));
+			output = Util.getObject(outputBytes);
+
+			db.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return output;
 	}
 
 }
