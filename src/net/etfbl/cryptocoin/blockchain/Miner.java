@@ -3,6 +3,7 @@ package net.etfbl.cryptocoin.blockchain;
 import java.math.BigDecimal;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Random;
 
@@ -151,7 +152,6 @@ public class Miner {
 		}
 
 		Random random = new Random(new Date().getTime());
-		block.computeMerkleTreeRootHash();
 
 		while(!Util.checkFirstZeroBytes(block.getHash())) {
 			block.setNonce(random.nextInt(Integer.MAX_VALUE));

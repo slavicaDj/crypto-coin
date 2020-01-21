@@ -33,9 +33,10 @@ public class Block implements Serializable, Comparable<Block> {
 		this.transactions = transactions;
 
 		computeHash();
+		computeMerkleTreeRootHash();
 	}
 	
-	public void computeHash() {
+	void computeHash() {
 
 		byte[] blockBytes = Util.concatenateByteArrays(previousBlockHash,
 				  Util.getByteArray(timestamp.getTime()),
@@ -45,7 +46,7 @@ public class Block implements Serializable, Comparable<Block> {
 		hash = Crypto.computeHash(blockBytes);
 	}
 
-	public void computeMerkleTreeRootHash() {
+	private void computeMerkleTreeRootHash() {
 		if (transactions == null || transactions.size() < 1)
 			return;
 			

@@ -147,11 +147,11 @@ public class Transaction implements Serializable{
 		return blockHeight;
 	}
 
-	public void computeHash() {
+	void computeHash() {
 		hash = Crypto.computeHash(Util.getBytes(this));
 	}
 
-	public byte[] getInputBytes(int index) {
+	private byte[] getInputBytes(int index) {
 		ArrayList<Byte> bytes = new ArrayList<Byte>();
 
 		if (index > inputs.size())
@@ -258,7 +258,7 @@ public class Transaction implements Serializable{
 		return  outputSum;
 	}
 
-	public void computeSignature(int index, PrivateKey privateKey) {
+	void computeSignature(int index, PrivateKey privateKey) {
 		inputs.get(index).signature = Crypto.signData(privateKey, getInputBytes(index));
 	}
 
